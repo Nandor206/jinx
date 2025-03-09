@@ -11,7 +11,7 @@ curl -O https://github.com/Nandor206/rust_web/releases/download/v1.0.1/rust_web
 ```sh
 curl -O https://github.com/Nandor206/rust_web/releases/download/v1.0.1/rust_web.exe
 ```
-###### You can copy and move my html files to the right directory with this command:
+##### You can copy and move my html files to the right directory with this command:
 - Linux/Mac
 ```sh
 cd ~/Documents
