@@ -1,6 +1,5 @@
 ## Simple web server in Rust
-It can only serve 1 page yet, but multiple page support is on the way!
-Right now everything else brings you to the error page.
+I started this project as a web app at first, now it's gonna be an Nginx copy, because I got bored doing it web app (I didn't even had any idea what to do).
 
 Some times I use questionable commit messeges, please don't take it seriusly. TY
 
@@ -38,3 +37,9 @@ Run the file in the terminal:
 ```sh
 ./rust-web
 ```
+
+## TODO:
+- Multi page support
+- Custom port support
+- A normal project name
+- Other error support
