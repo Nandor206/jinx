@@ -4,15 +4,15 @@ Right now everything else brings you to the error page.
 
 Some times I use questionable commit messeges, please don't take it seriusly. TY
 
-#### Download my app:
-- Linux/Mac (Tested on Fedora 41)
-Fire up the terminal and run this:
+### Download my app:
+#### Linux/Mac (Tested on Fedora 41)
+- Fire up the terminal and run this:
 ```sh
 curl -O https://github.com/Nandor206/rust_web/releases/download/v1.1.0/rust_web
 curl -O https://github.com/Nandor206/rust_web/releases/download/v1.1.0/config.yaml
 ```
-- Windows (Not tested)
-Fire up CMD or Powershell and run this:
+#### Windows (Not tested)
+- Fire up CMD or Powershell and run this:
 ```sh
 curl -O https://github.com/Nandor206/rust_web/releases/download/v1.1.0/rust_web.exe
 curl -O https://github.com/Nandor206/rust_web/releases/download/v1.1.0/config.yaml
