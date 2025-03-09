@@ -27,9 +27,9 @@ mkdir public && cd public
 curl -O https://github.com/Nandor206/rust_web/releases/download/v1.0.1/index.html
 ```
 ## To run the app:
-On Windows:
+- On Windows:
 Run the .exe file
-On Linux/Mac:
+- On Linux/Mac:
 Run the file in the terminal:
 ```sh
 ./rust-web
