@@ -1,8 +1,7 @@
 use tiny_http::{ Server, Response, StatusCode };
-use std::os::fd::AsFd;
 use std::path::PathBuf;
 use std::{ fs, thread };
-use std::{ path::Path, process };
+use std::process;
 use webbrowser;
 use directories::UserDirs;
 
