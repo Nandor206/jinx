@@ -5,22 +5,22 @@ It checks for the files in the Documents so you need to have a folder named publ
 #### Download my app:
 - Linux/Mac (Tested on Fedora 41)
 ```sh
-curl -O https://github.com/Nandor206/rust_web/releases/download/v1.0.0/rust_web
+curl -O https://github.com/Nandor206/rust_web/releases/download/v1.0.1/rust_web
 ```
 - Windows (Not tested)
 ```sh
-curl -O https://github.com/Nandor206/rust_web/releases/download/v1.0.0/rust_web.exe
+curl -O https://github.com/Nandor206/rust_web/releases/download/v1.0.1/rust_web.exe
 ```
 ###### You can copy and move my html files to the right directory with this command:
 - Linux/Mac
 ```sh
 cd ~/Documents
 mkdir public && cd public
-curl -O https://github.com/Nandor206/rust_web/releases/download/v1.0.0/index.html
+curl -O https://github.com/Nandor206/rust_web/releases/download/v1.0.1/index.html
 ```
 - Windows
 ```sh
 cd %USERPROFILE%\Documents
 mkdir public && cd public
-curl -O https://github.com/Nandor206/rust_web/releases/download/v1.0.0/index.html
+curl -O https://github.com/Nandor206/rust_web/releases/download/v1.0.1/index.html
 ```
