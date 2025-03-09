@@ -1,12 +1,27 @@
+use serde_derive::Deserialize;
 use tiny_http::{ Server, Response, StatusCode };
 use std::path::PathBuf;
 use std::{ fs, thread };
 use std::process;
 use webbrowser;
-use directories::UserDirs;
 
+// Config file reading
+#[derive(Deserialize)]
+struct Config {
+    html: String,
+    path: PathBuf,
+}
+
+// Main
 fn main() {
-    let dir_path = check();
+    let dir_path = match check() {
+        Ok(path) => path,
+        Err(err) => {
+            eprintln!("{}", err);
+            process::exit(1);
+        }
+    };
+
     let server = Server::http("127.0.0.1:7878").unwrap();
 
     // Open the default web browser
@@ -15,16 +30,18 @@ fn main() {
     });
 
     println!("Serving on port 7878");
+    println!("Serving directory: {:?}", dir_path);
 
     for request in server.incoming_requests() {
         let url = request.url().trim_start_matches('/');
 
-        let file_path = match url {
-            "" => dir_path.join("index.html"), // Default page
-            _ => dir_path.join(url),
+        let file_path = if url.is_empty() {
+            dir_path.join("index.html") // Default page
+        } else {
+            dir_path.join(url)
         };
 
-        match fs::read(file_path) {
+        match fs::read(&file_path) {
             Ok(contents) => {
                 let response = Response::from_data(contents);
                 let _ = request.respond(response);
@@ -44,16 +61,30 @@ fn main() {
     }
 }
 
-fn check() -> PathBuf {
-    let user_dirs = UserDirs::new().expect("Failed to get directories");
-    let documents_dir = user_dirs.document_dir().expect("Failed to find Documents directory");
+// Checking if path exists
+fn check() -> Result<PathBuf, String> {
+    let file_content = fs::read_to_string("config.yaml").map_err(|_| "Unable to read config.yaml".to_string())?;
+    let config: Config = serde_yaml::from_str(&file_content).map_err(|_| "Unable to parse YAML".to_string())?;
 
-    let dir_path = documents_dir.join("public");
+    let dir_path = if !config.path.as_os_str().is_empty() {
+        config.path
+    } else {
+        PathBuf::from("./")
+    };
 
     if !dir_path.exists() {
-        eprintln!("Error: '{}' directory is missing!", dir_path.display());
-        eprintln!("Did you install the app correctly? If not, check out the GitHub page!");
-        process::exit(1);
+        return Err(format!("Directory {:?} does not exist", dir_path));
     }
-    dir_path
+
+    let index_path = if config.html.is_empty() {
+        dir_path.join("index.html")
+    } else {
+        dir_path.join(&config.html)
+    };
+
+    if !index_path.exists() {
+        return Err(format!("{} can't be found in the directory", index_path.display()));
+    }
+
+    Ok(dir_path)
 }
