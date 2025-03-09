@@ -2,6 +2,8 @@
 It can only serve 1 page (index.html) everything else brings you to the error page.
 It checks for the files in the Documents so you need to have a folder named public in the documents directory with an index.html (404.html is not needed).
 
+Some times I use questionable commit messeges, please don't take it seriusly. TY
+
 #### Download my app:
 - Linux/Mac (Tested on Fedora 41)
 ```sh
