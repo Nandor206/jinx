@@ -14,8 +14,8 @@ struct Config {
 
 // Main
 fn main() {
-    let dir_path = match check() {
-        Ok(path) => path,
+    let (dir_path, file_path) = match check() {
+        Ok((path, file)) => (path, file),
         Err(err) => {
             eprintln!("{}", err);
             process::exit(1);
@@ -31,15 +31,18 @@ fn main() {
 
     println!("Serving on port 7878");
     println!("Serving directory: {:?}", dir_path);
+    println!("Serving file: {:?}", file_path);
 
     for request in server.incoming_requests() {
         let url = request.url().trim_start_matches('/');
 
         let file_path = if url.is_empty() {
-            dir_path.join("index.html") // Default page
+            file_path.clone() // Default page
         } else {
             dir_path.join(url)
         };
+
+        println!("Request for: {:?}", file_path);
 
         match fs::read(&file_path) {
             Ok(contents) => {
@@ -62,7 +65,7 @@ fn main() {
 }
 
 // Checking if path exists
-fn check() -> Result<PathBuf, String> {
+fn check() -> Result<(PathBuf,PathBuf), String> {
     let file_content = fs::read_to_string("config.yaml").map_err(|_| "Unable to read config.yaml".to_string())?;
     let config: Config = serde_yaml::from_str(&file_content).map_err(|_| "Unable to parse YAML".to_string())?;
 
@@ -86,5 +89,5 @@ fn check() -> Result<PathBuf, String> {
         return Err(format!("{} can't be found in the directory", index_path.display()));
     }
 
-    Ok(dir_path)
+    Ok((dir_path, index_path))
 }
