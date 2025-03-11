@@ -1,6 +1,7 @@
 ## Simple web server in Rust
 I started this project as a web application, then got bored and continued it as a Nginx copy. 
-Don't expect too much from it, but it does the very basic stuff. You can share 1 page, you can log the things it does. 
+Don't expect too much from it, but it does the very basic stuff. You can share 1 page, you can log the things it does, etc. Really basic stuff. I hope it will get better by the time. Seems like a really good project.
+I hate the fact, that I don't know much about Rust yet, so I'm using ChatGPT here and there. I cannot take responsibility for anything.
 
 Some times I use questionable commit messeges, please don't take it seriusly. TY
 
