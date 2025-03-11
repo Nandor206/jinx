@@ -10,7 +10,7 @@ use std::process::Command;
 #[derive(Deserialize)]
 struct Config {
     #[serde(default)]
-    html: String,
+    main: String,
     path: PathBuf,
     port: u32,
 }
@@ -25,7 +25,7 @@ fn main() {
         }
     };
 
-    let server = Server::http(format!("127.0.0.1:{}", port)).unwrap();
+    let server = Server::http(format!("0.0.0.0:{}", port)).unwrap();
     let url = format!("http://localhost:{}", port);
     // Open the default web browser
     thread::spawn(move || {
@@ -34,7 +34,7 @@ fn main() {
 
     println!("Serving on port {}", port);
     println!("Serving directory: {:?}", dir_path);
-    println!("Serving file: {:?}", file_path);
+    println!("Serving main file: {:?}", file_path);
 
     for request in server.incoming_requests() {
         let url = request.url().trim_start_matches('/');
@@ -68,7 +68,7 @@ fn main() {
 }
 
 // Checking if path exists
-fn check() -> Result<(PathBuf, PathBuf, u8), String> {
+fn check() -> Result<(PathBuf, PathBuf, u32), String> {
     let file_path = "config.yaml";
 
     // Declare these before using them in both cases
@@ -93,13 +93,13 @@ fn check() -> Result<(PathBuf, PathBuf, u8), String> {
         file_content = fs::read_to_string(file_path)
             .map_err(|_| "Unable to read downloaded config.yaml".to_string())?;
     }
-    println!("File content: {}", file_content);
+    //println!("File content: {}", file_content);
     // Deserialize YAML after it's confirmed to be read
     config = serde_yaml::from_str(&file_content)
         .map_err(|_| "Unable to parse YAML".to_string())?;
 
     // Extract port
-    let port: u16 = config.port;
+    let port = config.port;
 
     // Determine directory path
     let dir_path = if !config.path.as_os_str().is_empty() {
@@ -113,10 +113,10 @@ fn check() -> Result<(PathBuf, PathBuf, u8), String> {
     }
 
     // Determine index path
-    let index_path = if config.html.is_empty() {
+    let index_path = if config.main.is_empty() {
         dir_path.join("index.html")
     } else {
-        dir_path.join(&config.html)
+        dir_path.join(&config.main)
     };
 
     if !index_path.exists() {
