@@ -25,17 +25,10 @@ If you don't happen to have one you can create one with this template:
 # File that will be served (defaults to index.html)
 html: ""
 # Path where the html can be found (defaults to the same directory where the launcher is found)
-path: "./assets"
+path: ""
 # If you want custom error 404 page put a 404.html file in the same directory as the other directory
 ```
-### Directory tree:
-```
-├── assests
-│   ├── index.html
-│   ├── 404.html
-│   └── style.css
-├── rust_web
-```
+
 
 
 ### To run the app:
