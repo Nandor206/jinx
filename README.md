@@ -27,6 +27,8 @@ html: ""
 # Path where the html can be found (defaults to the same directory where the launcher is found)
 path: ""
 # If you want custom error 404 page put a 404.html file in the same directory as the other directory
+# Port number is needed, there is no default yet. Might support it later.
+port: 7878
 ```
 
 
