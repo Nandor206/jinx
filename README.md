@@ -42,6 +42,5 @@ Run the file in the terminal:
 
 ## TODO:
 - Multi page support
-- Custom port support
 - A normal project name
 - Other error support
