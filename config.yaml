@@ -8,4 +8,4 @@ path: ""
 port: 7878
 # Log will be putted into jinx.log (if false, log is going to be on terminal)
 # Log is going to be putted next to config.yaml
-log: True
+log: true

@@ -7,6 +7,9 @@ use webbrowser;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
 use std::process;
+use std::fs::OpenOptions;
+use chrono::Local;
+use std::io::Write;
 
 // Config file reading
 #[derive(Deserialize)]
@@ -37,8 +40,8 @@ fn main() {
     });
 
     println!("Serving on port {}", PORT.lock().unwrap());
-    println!("Serving directory: {:?}", PATH);
-    println!("Serving main file: {:?}", MAIN_PAGE);
+    println!("Serving directory: {:?}", PATH.lock().unwrap());
+    println!("Serving main file: {:?}", MAIN_PAGE.lock().unwrap());
 
     start_http_server();
 }
@@ -57,14 +60,43 @@ fn start_http_server() {
         } else {
             dir_path.join(url)
         };
-
-        println!("Request for: {:?}", file_path);
+        let timestamp = Local::now().format("[%Y-%m-%d %H:%M:%S]").to_string();
+        let content = format!("{} - Request for: {:?}", timestamp, file_path);
+        if *LOG.lock().unwrap() {
+            let mut file = OpenOptions::new()
+                .create(true)   // Create the file if it doesn't exist
+                .append(true)   // Append to the file instead of overwriting
+                .open("jinx.log")
+                .expect("Failed to open log file");
+        
+            if let Err(e) = writeln!(file, "{}", content) {
+                eprintln!("Failed to write to log file: {}", e);
+            }
+        }
+        else {
+            println!("Request for: {:?}", file_path);
+        }
 
         match fs::read(&file_path) {
             Ok(contents) => {
                 let response = Response::from_data(contents);
                 let _ = request.respond(response);
-                println!("Response successfully sent");
+                let timestamp = Local::now().format("[%Y-%m-%d %H:%M:%S]").to_string();
+                let content = format!("{} - Response successfully sent", timestamp);
+                if *LOG.lock().unwrap() {
+                    let mut file = OpenOptions::new()
+                        .create(true)   // Create the file if it doesn't exist
+                        .append(true)   // Append to the file instead of overwriting
+                        .open("jinx.log")
+                        .expect("Failed to open log file");
+                
+                    if let Err(e) = writeln!(file, "{}", content) {
+                        eprintln!("Failed to write to log file: {}", e);
+                    }
+                }
+                else {
+                    println!("Response successfully sent");
+                }
             }
             Err(_) => {
                 let error_page = fs
@@ -75,7 +107,22 @@ fn start_http_server() {
 
                 let response = Response::from_data(error_page).with_status_code(StatusCode(404));
                 let _ = request.respond(response);
-                println!("Request cannot be satisfied.");
+                let timestamp = Local::now().format("[%Y-%m-%d %H:%M:%S]").to_string();
+                let content = format!("{} - Request cannot be satisfied", timestamp);
+                if *LOG.lock().unwrap() {
+                    let mut file = OpenOptions::new()
+                        .create(true)   // Create the file if it doesn't exist
+                        .append(true)   // Append to the file instead of overwriting
+                        .open("jinx.log")
+                        .expect("Failed to open log file");
+                
+                    if let Err(e) = writeln!(file, "{}", content) {
+                        eprintln!("Failed to write to log file: {}", e);
+                    }
+                }
+                else {
+                    println!("Request cannot be satisfied");
+                }
             }
         }
     }
