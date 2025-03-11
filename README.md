@@ -1,34 +1,54 @@
 ## Simple web server in Rust
-I started this project as a web app at first, now it's gonna be an Nginx copy, because I got bored doing it web app (I didn't even had any idea what to do).
+I started this project as a web application, then got bored and continued it as a Nginx copy. 
+Don't expect too much from it, but it does the very basic stuff. You can share 1 page, you can log the things it does. 
 
 Some times I use questionable commit messeges, please don't take it seriusly. TY
 
-### Download my app:
-#### Linux/Mac (Tested on Fedora 41)
-- Fire up the terminal and run this:
+### To download and run my app:
+#### On Linux/Mac (Tested on Fedora 41)
+- Fire up the terminal and run these commands:
 ```sh
+mkdir ~/Documents/Jinx && cd ~/Documents/Jinx
 curl -O https://github.com/Nandor206/rust_web/releases/download/v2.0.0/Jinx
+./Jinx
 ```
-#### Windows (Not tested)
-- Fire up CMD or Powershell and run this:
-```sh
-curl -O https://github.com/Nandor206/rust_web/releases/download/v2.0.0/Jinx.exe
-```
+- This creates a folder in the Documents folder and downloads the additional stuff needed (via the app)
 
-### Config.yaml (doesn't work without it)
-Don't worry, if you installed the app right it should be in the same directory as the runnible. (Must be in the same directory as the runnible!)
-If you don't happen to have one you can create one with this template:
+#### On Windows (Not tested)
+- Fire up CMD or Powershell and run these commands:
+```sh
+mkdir ~/
+mkdir $env:USERPROFILE\Documents\Jinx; cd $env:USERPROFILE\Documents\Jinx
+curl -O https://github.com/Nandor206/rust_web/releases/download/v2.0.0/Jinx.exe
+./Jinx.exe
+```
+- This creates a folder in the Documents folder and downloads the additional stuff needed (via the app)
+
+### Configuration file:
+If you run the app it should create one file called 'config.yaml' in the same directory as the app.
+In the file everything's explained
+Here is a template if you need it:
 ```yaml
-# If path or main is empty ("") default is going to be used
-# File's name that needs to be served (defaults to index.html)
-main: ""
-# If you want custom error 404 page put a 404.html file in the same directory as the other html file
-# Path where the html can be found (defaults to the same directory where the launcher is found)
+# There is a default will be used unless specifically askd for
+
+# Path where the files can be found (defaults to current directory if the string is empty)
 path: ""
-# Port number is needed, there is no default yet. Might support it later.
+
+# The name of the file that will be served (defaults to index.html if the string is empty)
+# If you want a custom 404 page put a file named '404.html' in the same directory
+main: ""
+# .html supported, .php is not yet tested
+
+# Port number:
 port: 7878
-# Log will be putted into jinx.log (if false, log is going to be on terminal)
+# Unsigned intager (u32), needed!
+# This is where you can find your website
+
+# Logging in to file:
 log: false
+# Boolean, needed!
+# If set true: will create a file named 'jinx.log'
+# If yet false: everything goes to the terminal
 ```
 
 
