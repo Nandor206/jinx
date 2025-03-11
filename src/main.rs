@@ -1,37 +1,40 @@
 use serde_derive::Deserialize;
 use tiny_http::{ Server, Response, StatusCode };
-use std::path::PathBuf;
+use std::path::{ PathBuf, Path };
 use std::{ fs, thread };
 use std::process;
 use webbrowser;
+use std::process::Command;
 
 // Config file reading
 #[derive(Deserialize)]
 struct Config {
-    html: String,
+    #[serde(default)]
+    main: String,
     path: PathBuf,
+    port: u32,
 }
 
 // Main
 fn main() {
-    let (dir_path, file_path) = match check() {
-        Ok((path, file)) => (path, file),
+    let (dir_path, file_path, port) = match check() {
+        Ok((path, file, port)) => (path, file, port),
         Err(err) => {
             eprintln!("{}", err);
             process::exit(1);
         }
     };
 
-    let server = Server::http("127.0.0.1:7878").unwrap();
-
+    let server = Server::http(format!("0.0.0.0:{}", port)).unwrap();
+    let url = format!("http://localhost:{}", port);
     // Open the default web browser
-    thread::spawn(|| {
-        let _ = webbrowser::open("http://localhost:7878");
+    thread::spawn(move || {
+        let _ = webbrowser::open(&url);
     });
 
-    println!("Serving on port 7878");
+    println!("Serving on port {}", port);
     println!("Serving directory: {:?}", dir_path);
-    println!("Serving file: {:?}", file_path);
+    println!("Serving main file: {:?}", file_path);
 
     for request in server.incoming_requests() {
         let url = request.url().trim_start_matches('/');
@@ -65,12 +68,42 @@ fn main() {
 }
 
 // Checking if path exists
-fn check() -> Result<(PathBuf,PathBuf), String> {
-    let file_content = fs::read_to_string("config.yaml").map_err(|_| "Unable to read config.yaml".to_string())?;
-    let config: Config = serde_yaml::from_str(&file_content).map_err(|_| "Unable to parse YAML".to_string())?;
+fn check() -> Result<(PathBuf, PathBuf, u32), String> {
+    let file_path = "config.yaml";
 
+    // Declare these before using them in both cases
+    let file_content: String;
+    let config: Config;
+
+    if Path::new(file_path).exists() {
+        file_content = fs::read_to_string(file_path)
+            .map_err(|_| "Unable to read config.yaml".to_string())?;
+    } else {
+        let url = "https://github.com/Nandor206/rust_web/releases/download/v1.2.0/config.yaml"; 
+        let output = Command::new("curl")
+            .arg("-O")
+            .arg(url)
+            .output()
+            .expect("Failed to execute curl");
+
+        if !output.status.success() || !Path::new(file_path).exists() {
+            return Err("Failed to download config.yaml".to_string());
+        }
+
+        file_content = fs::read_to_string(file_path)
+            .map_err(|_| "Unable to read downloaded config.yaml".to_string())?;
+    }
+    //println!("File content: {}", file_content);
+    // Deserialize YAML after it's confirmed to be read
+    config = serde_yaml::from_str(&file_content)
+        .map_err(|_| "Unable to parse YAML".to_string())?;
+
+    // Extract port
+    let port = config.port;
+
+    // Determine directory path
     let dir_path = if !config.path.as_os_str().is_empty() {
-        config.path
+        config.path.clone()
     } else {
         PathBuf::from("./")
     };
@@ -79,15 +112,16 @@ fn check() -> Result<(PathBuf,PathBuf), String> {
         return Err(format!("Directory {:?} does not exist", dir_path));
     }
 
-    let index_path = if config.html.is_empty() {
+    // Determine index path
+    let index_path = if config.main.is_empty() {
         dir_path.join("index.html")
     } else {
-        dir_path.join(&config.html)
+        dir_path.join(&config.main)
     };
 
     if !index_path.exists() {
         return Err(format!("{} can't be found in the directory", index_path.display()));
     }
 
-    Ok((dir_path, index_path))
+    Ok((dir_path, index_path, port))
 }

@@ -1,6 +1,8 @@
-# If path or html is empty ("") default is going to be used
+# If path or main is empty ("") default is going to be used
 # File's name that needs to be served (defaults to index.html)
-html: ""
-# Path where the html can be found (defaults to the same directory where the launcher is found)
-path: "./public"
+main: ""
 # If you want custom error 404 page put a 404.html file in the same directory as the other html file
+# Path where the html can be found (defaults to the same directory where the launcher is found)
+path: ""
+# Custom port, below 1023 you need to run the app with SuperUser privilages
+port: 7878
