@@ -9,7 +9,7 @@ Some times I use questionable commit messeges, please don't take it seriusly. TY
 - Fire up the terminal and run these commands:
 ```sh
 mkdir ~/Documents/Jinx && cd ~/Documents/Jinx
-curl -O https://github.com/Nandor206/rust_web/releases/download/v2.0.0/Jinx
+curl -O https://github.com/Nandor206/rust_web/releases/download/latest/Jinx
 ./Jinx
 ```
 - This creates a folder in the Documents folder and downloads the additional stuff needed (via the app)
@@ -19,7 +19,7 @@ curl -O https://github.com/Nandor206/rust_web/releases/download/v2.0.0/Jinx
 ```sh
 mkdir ~/
 mkdir $env:USERPROFILE\Documents\Jinx; cd $env:USERPROFILE\Documents\Jinx
-curl -O https://github.com/Nandor206/rust_web/releases/download/v2.0.0/Jinx.exe
+curl -O https://github.com/Nandor206/rust_web/releases/download/latest/Jinx.exe
 ./Jinx.exe
 ```
 - This creates a folder in the Documents folder and downloads the additional stuff needed (via the app)
