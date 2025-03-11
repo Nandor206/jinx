@@ -24,6 +24,10 @@ curl -O https://github.com/Nandor206/rust_web/releases/download/latest/Jinx.exe
 ```
 - This creates a folder in the Documents folder and downloads the additional stuff needed (via the app)
 
+#### To run the app again:
+- Windows: start Jinx.exe
+- Linux/Mac: run the binary
+
 ### Configuration file:
 If you run the app it should create one file called 'config.yaml' in the same directory as the app.
 In the file everything's explained
@@ -51,18 +55,7 @@ log: false
 # If yet false: everything goes to the terminal
 ```
 
-
-
-### To run the app:
-- On Windows:
-Run the .exe file
-- On Linux/Mac:
-Run the file in the terminal:
-```sh
-./Jinx
-```
-Note that the additional files are going to be made in the same directory where you run the app.
-
 ## TODO:
 - Multi page support
 - Other error support
+- config file: auto open page support (currently opens always)
