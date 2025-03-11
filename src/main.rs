@@ -2,9 +2,11 @@ use serde_derive::Deserialize;
 use tiny_http::{Server, Response, StatusCode};
 use std::path::{PathBuf, Path};
 use std::{fs, thread};
-use std::process;
+use std::process::*;
 use webbrowser;
-use std::process::Command;
+use once_cell::sync::Lazy;
+use std::sync::Mutex;
+use std::process;
 
 // Config file reading
 #[derive(Deserialize)]
@@ -13,30 +15,39 @@ struct Config {
     main: String,
     path: PathBuf,
     port: u32,
+    log: bool,
 }
 
-fn main() {
-    let (dir_path, file_path, port) = match check() {
-        Ok((path, file, port)) => (path, file, port),
-        Err(err) => {
-            eprintln!("{}", err);
-            process::exit(1);
-        }
-    };
+// Use Mutex for mutable global state
+static PORT: Lazy<Mutex<u32>> = Lazy::new(|| Mutex::new(7878));
+static LOG: Lazy<Mutex<bool>> = Lazy::new(|| Mutex::new(false));
+static MAIN_PAGE: Lazy<Mutex<String>> = Lazy::new(|| Mutex::new("index.html".to_string()));
+static PATH: Lazy<Mutex<PathBuf>> = Lazy::new(|| Mutex::new(PathBuf::from("./")));
 
-    let url = format!("http://localhost:{}", port);
+fn main() {
+    if let Err(err) = check() {
+        eprintln!("{}", err);
+        process::exit(1);
+    }
+
+
+    let url = format!("http://localhost:{}", PORT.lock().unwrap());
     thread::spawn(move || {
         let _ = webbrowser::open(&url);
     });
 
-    println!("Serving on port {}", port);
-    println!("Serving directory: {:?}", dir_path);
-    println!("Serving main file: {:?}", file_path);
+    println!("Serving on port {}", PORT.lock().unwrap());
+    println!("Serving directory: {:?}", PATH);
+    println!("Serving main file: {:?}", MAIN_PAGE);
 
-    start_http_server(dir_path, file_path, port);
+    start_http_server();
 }
 
-fn start_http_server(dir_path: PathBuf, file_path: PathBuf, port: u32) {
+fn start_http_server() {
+
+    let port = *PORT.lock().unwrap();
+    let dir_path = PATH.lock().unwrap().clone();
+    let file_path = dir_path.join(MAIN_PAGE.lock().unwrap().clone());
     let server = Server::http(format!("0.0.0.0:{}", port)).unwrap();
 
     for request in server.incoming_requests() {
@@ -53,6 +64,7 @@ fn start_http_server(dir_path: PathBuf, file_path: PathBuf, port: u32) {
             Ok(contents) => {
                 let response = Response::from_data(contents);
                 let _ = request.respond(response);
+                println!("Response successfully sent");
             }
             Err(_) => {
                 let error_page = fs
@@ -63,60 +75,67 @@ fn start_http_server(dir_path: PathBuf, file_path: PathBuf, port: u32) {
 
                 let response = Response::from_data(error_page).with_status_code(StatusCode(404));
                 let _ = request.respond(response);
+                println!("Request cannot be satisfied.");
             }
         }
     }
 }
 
 // Checking if path exists
-fn check() -> Result<(PathBuf, PathBuf, u32), String> {
-    let file_path = "config.yaml";
+fn check() -> Result<(), String> {
+    let file = "config.yaml";
 
     let file_content: String;
     let config: Config;
 
-    if Path::new(file_path).exists() {
-        file_content = fs::read_to_string(file_path)
+    if Path::new(file).exists() {
+        file_content = fs::read_to_string(file)
             .map_err(|_| "Unable to read config.yaml".to_string())?;
     } else {
-        let url = "https://github.com/Nandor206/rust_web/releases/download/v1.2.0/config.yaml";
+        let url = "https://github.com/Nandor206/jinx/releases/download/v1.2.0/config.yaml";
         let output = Command::new("curl")
             .arg("-O")
             .arg(url)
             .output()
             .expect("Failed to execute curl");
 
-        if !output.status.success() || !Path::new(file_path).exists() {
+        if !output.status.success() || !Path::new(file).exists() {
             return Err("Failed to download config.yaml".to_string());
         }
 
-        file_content = fs::read_to_string(file_path)
+        file_content = fs::read_to_string(file)
             .map_err(|_| "Unable to read downloaded config.yaml".to_string())?;
     }
-    
+
     config = serde_yaml::from_str(&file_content)
         .map_err(|_| "Unable to parse YAML".to_string())?;
 
-    let port = config.port;
-    let dir_path = if !config.path.as_os_str().is_empty() {
+    // Update global variables
+    *PORT.lock().unwrap() = config.port;
+    *LOG.lock().unwrap() = config.log;
+
+    let mut path = PATH.lock().unwrap();
+    *path = if !config.path.as_os_str().is_empty() {
         config.path.clone()
     } else {
         PathBuf::from("./")
     };
 
-    if !dir_path.exists() {
-        return Err(format!("Directory {:?} does not exist", dir_path));
+    if !path.exists() {
+        return Err(format!("Directory {:?} does not exist", path));
     }
 
-    let index_path = if config.main.is_empty() {
-        dir_path.join("index.html")
+    let mut main_page = MAIN_PAGE.lock().unwrap();
+    *main_page = if config.main.is_empty() {
+        "index.html".to_string()
     } else {
-        dir_path.join(&config.main)
+        config.main.clone()
     };
 
+    let index_path = path.join(&*main_page);
     if !index_path.exists() {
         return Err(format!("{} can't be found in the directory", index_path.display()));
     }
 
-    Ok((dir_path, index_path, port))
+    Ok(())
 }
