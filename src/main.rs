@@ -139,7 +139,7 @@ fn check() -> Result<(), String> {
         file_content = fs::read_to_string(file)
             .map_err(|_| "Unable to read config.yaml".to_string())?;
     } else {
-        let url = "https://github.com/Nandor206/jinx/releases/download/v2.0.0/config.yaml";
+        let url = "https://github.com/Nandor206/jinx/releases/download/latest/config.yaml";
         let output = Command::new("curl")
             .arg("-O")
             .arg(url)
