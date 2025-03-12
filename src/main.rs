@@ -2,11 +2,9 @@ use serde_derive::Deserialize;
 use tiny_http::{ Server, Response, StatusCode };
 use std::path::{ PathBuf, Path };
 use std::{ fs, thread };
-use std::process::*;
-use webbrowser;
-use once_cell::sync::Lazy;
-use std::sync::Mutex;
+use std::process::Command;
 use std::process;
+use webbrowser;
 use std::fs::OpenOptions;
 use chrono::Local;
 use std::io::Write;
@@ -42,66 +40,63 @@ fn main() {
     println!("Serving directory: {:?}", PATH);
     println!("Serving main file: {:?}", MAIN_PAGE);
 
-    start_http_server(PORT,LOG,PATH,MAIN_PAGE);
+    start_http_server(PORT, LOG, PATH, MAIN_PAGE);
 }
 
 fn start_http_server(port: u32, log: bool, path: PathBuf, main_page: String) {
-    let file_path = path.join(main_page);
     let server = Server::http(format!("0.0.0.0:{}", port)).unwrap();
 
     for request in server.incoming_requests() {
         let url = request.url().trim_start_matches('/');
-        let file_path = if url.is_empty() {
-            file_path.clone() // Default page
+        
+        // If the URL is empty, serve the main page, otherwise handle specific file requests
+        let content = if url.is_empty() {
+            let index_path = path.join(&main_page);
+            fs::read(index_path).unwrap_or_else(|_| {
+                // If the main page can't be read, return the default error message
+                b"<h1>Your page can't be loaded.</h1><p>You either don't have your .html file in the right directory or the file's name is wrong.</p><p>Please check the config.yaml file, the problem might be there.</p><br><p>If you need more help please check out my github page <a href='https://github.com/Nandor206/jinx'>here</a></p><p>Start an issue if needed.</p>".to_vec()
+            })
         } else {
-            dir_path.join(url)
+            // Otherwise, check the URL for specific files
+            let file_path = path.join(url.to_string());
+            fs::read(&file_path).unwrap_or_else(|_| {
+                // If the file is not found, return the 404 error page
+                fs::read(path.join("404.html")).unwrap_or_else(|_| {
+                    // If the 404.html is also missing, return a default 404 message
+                    b"<h1>404 - Page Not Found</h1><p>Sorry, the page you are looking for does not exist.</p>".to_vec()
+                })
+            })
         };
 
         // Log the request
         let timestamp = Local::now().format("[%Y-%m-%d %H:%M:%S]").to_string();
-        let content = format!("{} - Request for: {:?}", timestamp, file_path);
+        let content_log = format!(
+            "{} - Request for: {:?}\nRequest method: {:?}",
+            timestamp,
+            url,
+            request.method(),
+        );
         if log {
-            log_to_file(&content);
+            log_to_file(&content_log);
         } else {
-            println!("Request for: {:?}", file_path);
+            println!(
+                "Request for: {:?}\nRequest method: {:?}",
+                url,
+                request.method(),
+            );
         }
 
+        // Respond with the file content or 404 page
+        let response = Response::from_data(content);
+        let _ = request.respond(response);
 
-
-        match fs::read(&file_path) {
-            Ok(contents) => {
-                let response = Response::from_data(contents);
-                let _ = request.respond(response);
-
-                // Logging
-                let timestamp = Local::now().format("[%Y-%m-%d %H:%M:%S]").to_string();
-                let content = format!("{} - Response successfully sent", timestamp);
-                if log {
-                    log_to_file(&content);
-                } else {
-                    println!("Response successfully sent");
-                }
-            }
-            Err(_) => {
-                let error_page = fs
-                    ::read(dir_path.join("404.html"))
-                    .unwrap_or_else(|_| {
-                        b"<h1>404 - Page Not Found</h1><p>Sorry, the page you are looking for does not exist.</p>".to_vec()
-                    });
-
-                let response = Response::from_data(error_page).with_status_code(StatusCode(404));
-                let _ = request.respond(response);
-
-                // Logging
-                let timestamp = Local::now().format("[%Y-%m-%d %H:%M:%S]").to_string();
-                let content = format!("{} - Request cannot be satisfied", timestamp);
-                if log {
-                    log_to_file(&content);
-                    }
-                } else {
-                    println!("Request cannot be satisfied");
-                }
-            }
+        // Log the response
+        let timestamp = Local::now().format("[%Y-%m-%d %H:%M:%S]").to_string();
+        let content_log = format!("{} - Response successfully sent", timestamp);
+        if log {
+            log_to_file(&content_log);
+        } else {
+            println!("Response successfully sent");
         }
     }
 }
@@ -138,30 +133,24 @@ fn check() -> Result<(u32, bool, PathBuf, String, bool), String> {
 
     let PORT = config.port;
     let LOG = config.log;
-    let PATH = "./";
-    let MAIN_PAGE = "index.html";
     let BROWSER = config.browser;
 
-    let PATH = if !config.path.as_os_str().is_empty() {
-        config.path;
+    let PATH: PathBuf = if !config.path.as_os_str().is_empty() {
+        config.path.clone()
+    } else {
+        PathBuf::from("./")
     };
 
     if !PATH.exists() {
-        return Err(format!("Directory {:?} does not exist", path));
+        return Err(format!("Directory {:?} does not exist", PATH));
+    } else {
+        PathBuf::from("./");
     }
 
-    let MAIN_PAGE = if !config.main.is_empty() {
-        config.main.clone()
-    };
-
-    let index_path = PATH.join(&MAIN_PAGE);
-    if !index_path.exists() {
-        return Err(format!("{} can't be found in the directory", index_path.display()));
-    }
+    let MAIN_PAGE = if !config.main.is_empty() { config.main } else { "index.html".to_string() };
 
     Ok((PORT, LOG, PATH, MAIN_PAGE, BROWSER))
 }
-
 
 // log to file
 fn log_to_file(content: &str) {

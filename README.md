@@ -58,5 +58,5 @@ browser: false
 ```
 
 ## TODO:
-- Multi page support - on the way!
-- Other error support
+- Multi page support - Done, tho not the way I'd like it
+- Other error support - Probably never gonna be implemented
