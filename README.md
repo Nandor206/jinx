@@ -16,15 +16,9 @@ curl -O https://github.com/Nandor206/jinx/releases/download/latest/Jinx
 - This creates a folder in the Documents folder and downloads the additional stuff needed (via the app)
 
 #### On Windows (Not tested)
-- Fire up CMD or Powershell and run these commands:
-- Seems broken, will fix it later
-```sh
-mkdir ~/
-mkdir $env:USERPROFILE\Documents\Jinx; cd $env:USERPROFILE\Documents\Jinx
-curl -O https://github.com/Nandor206/jinx/releases/download/latest/Jinx.exe
-./Jinx.exe
-```
-- This creates a folder in the Documents folder and downloads the additional stuff needed (via the app)
+- Download it with this link:
+https://github.com/Nandor206/jinx/releases/latest/Jinx.exe
+- The app will download the additional stuff needed
 
 #### To run the app again:
 - Windows: start Jinx.exe
@@ -55,9 +49,14 @@ log: false
 # Boolean, needed!
 # If set true: will create a file named 'jinx.log'
 # If yet false: everything goes to the terminal
+
+# Whether you'd like to open the webbrowser
+browser: false
+# Boolean, needed!
+# If set true: will open default browser
+# If set false: won't open nothing
 ```
 
 ## TODO:
-- Multi page support
+- Multi page support - on the way!
 - Other error support
-- config file: auto open page support (currently opens always)
