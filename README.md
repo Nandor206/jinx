@@ -35,6 +35,7 @@ Here is a template if you need it:
 path: ""
 
 # The name of the file that will be served (defaults to index.html if the string is empty)
+# If not found serves: support page
 # If you want a custom 404 page put a file named '404.html' in the same directory
 main: ""
 # .html supported, .php is not yet tested

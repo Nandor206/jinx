@@ -21,6 +21,7 @@ struct Config {
 }
 
 fn main() {
+    // Getting data from config file
     let (PORT, LOG, PATH, MAIN_PAGE, BROWSER) = match check() {
         Ok(config) => config,
         Err(err) => {
@@ -29,6 +30,7 @@ fn main() {
         }
     };
 
+    // Opening webbrowser if true
     if BROWSER {
         let url = format!("http://localhost:{}", PORT);
         thread::spawn(move || {
@@ -36,16 +38,19 @@ fn main() {
         });
     }
 
+    // Printing important stuff
     println!("Serving on port {}", PORT);
     println!("Serving directory: {:?}", PATH);
     println!("Serving main file: {:?}", MAIN_PAGE);
 
+    // Starting server
     start_http_server(PORT, LOG, PATH, MAIN_PAGE);
 }
 
 fn start_http_server(port: u32, log: bool, path: PathBuf, main_page: String) {
     let server = Server::http(format!("0.0.0.0:{}", port)).unwrap();
 
+    // Incoming requests
     for request in server.incoming_requests() {
         let url = request.url().trim_start_matches('/');
         
@@ -90,7 +95,7 @@ fn start_http_server(port: u32, log: bool, path: PathBuf, main_page: String) {
         let response = Response::from_data(content);
         let _ = request.respond(response);
 
-        // Log the response
+        // Log the successful response
         let timestamp = Local::now().format("[%Y-%m-%d %H:%M:%S]").to_string();
         let content_log = format!("{} - Response successfully sent", timestamp);
         if log {
@@ -101,7 +106,7 @@ fn start_http_server(port: u32, log: bool, path: PathBuf, main_page: String) {
     }
 }
 
-// Checking if path exists
+// Checking if path, config exits. Reading config file.
 fn check() -> Result<(u32, bool, PathBuf, String, bool), String> {
     let file = "config.yaml";
 
