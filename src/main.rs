@@ -1,7 +1,7 @@
 use serde_derive::Deserialize;
-use tiny_http::{Server, Response, StatusCode};
-use std::path::{PathBuf, Path};
-use std::{fs, thread};
+use tiny_http::{ Server, Response, StatusCode };
+use std::path::{ PathBuf, Path };
+use std::{ fs, thread };
 use std::process::*;
 use webbrowser;
 use once_cell::sync::Lazy;
@@ -19,38 +19,34 @@ struct Config {
     path: PathBuf,
     port: u32,
     log: bool,
+    browser: bool,
 }
-
-// Use Mutex for mutable global state
-static PORT: Lazy<Mutex<u32>> = Lazy::new(|| Mutex::new(7878));
-static LOG: Lazy<Mutex<bool>> = Lazy::new(|| Mutex::new(false));
-static MAIN_PAGE: Lazy<Mutex<String>> = Lazy::new(|| Mutex::new("index.html".to_string()));
-static PATH: Lazy<Mutex<PathBuf>> = Lazy::new(|| Mutex::new(PathBuf::from("./")));
 
 fn main() {
-    if let Err(err) = check() {
-        eprintln!("{}", err);
-        process::exit(1);
+    let (PORT, LOG, PATH, MAIN_PAGE, BROWSER) = match check() {
+        Ok(config) => config,
+        Err(err) => {
+            eprintln!("{}", err);
+            process::exit(1);
+        }
+    };
+
+    if BROWSER {
+        let url = format!("http://localhost:{}", PORT);
+        thread::spawn(move || {
+            let _ = webbrowser::open(&url);
+        });
     }
 
+    println!("Serving on port {}", PORT);
+    println!("Serving directory: {:?}", PATH);
+    println!("Serving main file: {:?}", MAIN_PAGE);
 
-    let url = format!("http://localhost:{}", PORT.lock().unwrap());
-    thread::spawn(move || {
-        let _ = webbrowser::open(&url);
-    });
-
-    println!("Serving on port {}", PORT.lock().unwrap());
-    println!("Serving directory: {:?}", PATH.lock().unwrap());
-    println!("Serving main file: {:?}", MAIN_PAGE.lock().unwrap());
-
-    start_http_server();
+    start_http_server(PORT,LOG,PATH,MAIN_PAGE);
 }
 
-fn start_http_server() {
-
-    let port = *PORT.lock().unwrap();
-    let dir_path = PATH.lock().unwrap().clone();
-    let file_path = dir_path.join(MAIN_PAGE.lock().unwrap().clone());
+fn start_http_server(port: u32, log: bool, path: PathBuf, main_page: String) {
+    let file_path = path.join(main_page);
     let server = Server::http(format!("0.0.0.0:{}", port)).unwrap();
 
     for request in server.incoming_requests() {
@@ -60,41 +56,29 @@ fn start_http_server() {
         } else {
             dir_path.join(url)
         };
+
+        // Log the request
         let timestamp = Local::now().format("[%Y-%m-%d %H:%M:%S]").to_string();
         let content = format!("{} - Request for: {:?}", timestamp, file_path);
-        if *LOG.lock().unwrap() {
-            let mut file = OpenOptions::new()
-                .create(true)   // Create the file if it doesn't exist
-                .append(true)   // Append to the file instead of overwriting
-                .open("jinx.log")
-                .expect("Failed to open log file");
-        
-            if let Err(e) = writeln!(file, "{}", content) {
-                eprintln!("Failed to write to log file: {}", e);
-            }
-        }
-        else {
+        if log {
+            log_to_file(&content);
+        } else {
             println!("Request for: {:?}", file_path);
         }
+
+
 
         match fs::read(&file_path) {
             Ok(contents) => {
                 let response = Response::from_data(contents);
                 let _ = request.respond(response);
+
+                // Logging
                 let timestamp = Local::now().format("[%Y-%m-%d %H:%M:%S]").to_string();
                 let content = format!("{} - Response successfully sent", timestamp);
-                if *LOG.lock().unwrap() {
-                    let mut file = OpenOptions::new()
-                        .create(true)   // Create the file if it doesn't exist
-                        .append(true)   // Append to the file instead of overwriting
-                        .open("jinx.log")
-                        .expect("Failed to open log file");
-                
-                    if let Err(e) = writeln!(file, "{}", content) {
-                        eprintln!("Failed to write to log file: {}", e);
-                    }
-                }
-                else {
+                if log {
+                    log_to_file(&content);
+                } else {
                     println!("Response successfully sent");
                 }
             }
@@ -107,20 +91,14 @@ fn start_http_server() {
 
                 let response = Response::from_data(error_page).with_status_code(StatusCode(404));
                 let _ = request.respond(response);
+
+                // Logging
                 let timestamp = Local::now().format("[%Y-%m-%d %H:%M:%S]").to_string();
                 let content = format!("{} - Request cannot be satisfied", timestamp);
-                if *LOG.lock().unwrap() {
-                    let mut file = OpenOptions::new()
-                        .create(true)   // Create the file if it doesn't exist
-                        .append(true)   // Append to the file instead of overwriting
-                        .open("jinx.log")
-                        .expect("Failed to open log file");
-                
-                    if let Err(e) = writeln!(file, "{}", content) {
-                        eprintln!("Failed to write to log file: {}", e);
+                if log {
+                    log_to_file(&content);
                     }
-                }
-                else {
+                } else {
                     println!("Request cannot be satisfied");
                 }
             }
@@ -129,14 +107,15 @@ fn start_http_server() {
 }
 
 // Checking if path exists
-fn check() -> Result<(), String> {
+fn check() -> Result<(u32, bool, PathBuf, String, bool), String> {
     let file = "config.yaml";
 
     let file_content: String;
     let config: Config;
 
     if Path::new(file).exists() {
-        file_content = fs::read_to_string(file)
+        file_content = fs
+            ::read_to_string(file)
             .map_err(|_| "Unable to read config.yaml".to_string())?;
     } else {
         let url = "https://github.com/Nandor206/jinx/releases/download/latest/config.yaml";
@@ -150,39 +129,49 @@ fn check() -> Result<(), String> {
             return Err("Failed to download config.yaml".to_string());
         }
 
-        file_content = fs::read_to_string(file)
+        file_content = fs
+            ::read_to_string(file)
             .map_err(|_| "Unable to read downloaded config.yaml".to_string())?;
     }
 
-    config = serde_yaml::from_str(&file_content)
-        .map_err(|_| "Unable to parse YAML".to_string())?;
+    config = serde_yaml::from_str(&file_content).map_err(|_| "Unable to parse YAML".to_string())?;
 
-    // Update global variables
-    *PORT.lock().unwrap() = config.port;
-    *LOG.lock().unwrap() = config.log;
+    let PORT = config.port;
+    let LOG = config.log;
+    let PATH = "./";
+    let MAIN_PAGE = "index.html";
+    let BROWSER = config.browser;
 
-    let mut path = PATH.lock().unwrap();
-    *path = if !config.path.as_os_str().is_empty() {
-        config.path.clone()
-    } else {
-        PathBuf::from("./")
+    let PATH = if !config.path.as_os_str().is_empty() {
+        config.path;
     };
 
-    if !path.exists() {
+    if !PATH.exists() {
         return Err(format!("Directory {:?} does not exist", path));
     }
 
-    let mut main_page = MAIN_PAGE.lock().unwrap();
-    *main_page = if config.main.is_empty() {
-        "index.html".to_string()
-    } else {
+    let MAIN_PAGE = if !config.main.is_empty() {
         config.main.clone()
     };
 
-    let index_path = path.join(&*main_page);
+    let index_path = PATH.join(&MAIN_PAGE);
     if !index_path.exists() {
         return Err(format!("{} can't be found in the directory", index_path.display()));
     }
 
-    Ok(())
+    Ok((PORT, LOG, PATH, MAIN_PAGE, BROWSER))
+}
+
+
+// log to file
+fn log_to_file(content: &str) {
+    let mut file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open("jinx.log")
+        .expect("Failed to open log file");
+
+    if let Err(e) = writeln!(file, "{}", content) {
+        eprintln!("Failed to write to log file: {}", e);
+    }
 }

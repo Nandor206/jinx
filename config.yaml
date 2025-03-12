@@ -18,3 +18,9 @@ log: false
 # Boolean, needed!
 # If set true: will create a file named 'jinx.log'
 # If yet false: everything goes to the terminal
+
+# Whether you'd like to open the webbrowser
+browser: false
+# Boolean, needed!
+# If set true: will open default browser
+# If set false: won't open nothing
