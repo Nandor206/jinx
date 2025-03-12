@@ -59,5 +59,9 @@ browser: false
 ```
 
 ## TODO:
-- Multi page support - Done, tho not the way I'd like it
-- Other error support - Probably never gonna be implemented
+- [x] Multi page support - Done, tho not the way I wanted it
+- [ ] Other error support - Probably never gonna be implemented
+- [x] Logging to file
+- [x] Config file - Was the first stuff to do
+- [ ] Testing more computers
+- [x] Cleaning the code - Done, thos might get dirty again
