@@ -134,7 +134,7 @@ fn check() -> Result<(u32, bool, PathBuf, String, bool), String> {
             .map_err(|_| "Unable to read downloaded config.yaml".to_string())?;
     }
 
-    config = serde_yaml::from_str(&file_content).map_err(|_| "Unable to parse YAML".to_string())?;
+    config = serde_yaml::from_str(&file_content).map_err(|_| "Unable to parse YAML, there might be a problem with your YAML file".to_string())?;
 
     let PORT = config.port;
     let LOG = config.log;
