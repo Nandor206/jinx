@@ -118,7 +118,7 @@ fn check() -> Result<(u32, bool, PathBuf, String, bool), String> {
             ::read_to_string(file)
             .map_err(|_| "Unable to read config.yaml".to_string())?;
     } else {
-        let url = "https://github.com/Nandor206/jinx/releases/download/latest/config.yaml";
+        let url = "https://github.com/Nandor206/jinx/releases/latest/download/config.yaml";
         let output = Command::new("curl")
             .arg("-O")
             .arg(url)
