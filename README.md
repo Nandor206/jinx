@@ -10,7 +10,7 @@ Some times I use questionable commit messeges, please don't take it seriusly. TY
 - Fire up the terminal and run these commands:
 ```sh
 mkdir ~/Documents/Jinx && cd ~/Documents/Jinx
-curl -O https://github.com/Nandor206/jinx/releases/download/latest/Jinx
+curl -O https://github.com/Nandor206/jinx/releases/latest/download/Jinx
 ./Jinx
 ```
 - This creates a folder in the Documents folder and downloads the additional stuff needed (via the app)
