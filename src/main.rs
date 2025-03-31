@@ -1,5 +1,4 @@
 // crates:
-use std::fs::OpenOptions;
 use std::fs;
 use std::process;
 use serde::Deserialize;
@@ -8,7 +7,6 @@ use clap::{Arg, self};
 use tiny_http::{Server, Response};
 use std::path::PathBuf;
 use chrono::Local;
-use std::io::Write;
 use webbrowser;
 
 
@@ -106,23 +104,21 @@ fn  start_http_server(port: u32, log: bool, path: PathBuf, main_page: String, lo
     }
 }
 
-fn log_to_file(content: &str, log_dir: &String) {
-    let path: PathBuf;
-    if log_dir.is_empty() {
-        path = dirs::config_local_dir().unwrap().join("jinx/jinx.log");
-    }
-    else {
-        path = PathBuf::from(log_dir);
-    }
-    let mut file = OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(path)
-        .expect("Failed to open log file");
+fn log_to_file(content: &str, log_dir: &str) -> () {
+    let path = match log_dir {
+        "" => {dirs::config_local_dir().unwrap().join("jinx/jinx.log")},
+        _ => {PathBuf::from(log_dir).join("jinx.log")}
+    };
 
-    if let Err(e) = writeln!(file, "{}", content) {
-        eprintln!("Failed to write to log file: {}", e);
-    }
+    // Read the existing content if the file exists
+    let mut log_data = fs::read_to_string(&path).unwrap_or_else(|_| String::new());
+
+    // Append new content
+    log_data.push_str(content);
+    log_data.push('\n');
+
+    // Write the updated log back to the file
+    fs::write(&path, log_data).unwrap();
 }
 
 
@@ -147,7 +143,7 @@ fn load_config() -> Config {
     let config_dir = dirs::config_local_dir().unwrap_or_else(|| {
         panic!("Could not find config directory. Please set the XDG_CONFIG_HOME environment variable.")
     });
-    let config_path = config_dir.join("Jinx");
+    let config_path = config_dir.join("jinx");
     if !config_path.exists() {
         std::fs::create_dir_all(&config_path).expect("Failed to create config directory");
     }
