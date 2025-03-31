@@ -9,9 +9,8 @@ Some times I use questionable commit messeges, please don't take it seriusly. TY
 #### On Linux/Mac (Tested on Fedora 41)
 - Fire up the terminal and run these commands:
 ```sh
-mkdir ~/Documents/Jinx && cd ~/Documents/Jinx
-curl -O https://github.com/Nandor206/jinx/releases/latest/download/Jinx
-./Jinx
+sudo curl -Lo github.com/Nandor206/jinx/releases/latest/download/jinx &&
+sudo chmod +x jinx && sudo mv jinx /usr/bin/
 ```
 - This creates a folder in the Documents folder and downloads the additional stuff needed (via the app)
 
@@ -20,9 +19,17 @@ curl -O https://github.com/Nandor206/jinx/releases/latest/download/Jinx
 https://github.com/Nandor206/jinx/releases/latest/Jinx.exe
 - The app will download the additional stuff needed
 
-#### To run the app again:
-- Windows: start Jinx.exe
-- Linux/Mac: run the binary
+#### To run the app:
+- Windows: start Jinx.exe (It's built, but not supported!)
+- Linux/Mac: run 
+```sh
+jinx
+```
+
+#### To edit the config file:
+```sh
+jinx -e
+```
 
 ### Configuration file:
 If you run the app it should create one file called 'config.yaml' in the same directory as the app.
