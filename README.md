@@ -32,8 +32,9 @@ jinx -e
 ```
 
 ### Configuration file:
-If you run the app it should create one file called 'config.yaml' in the same directory as the app.
-In the file everything's explained
+!!! browser and logging is broken !!!
+log: makes log file in current directory
+browser: doesn't open
 Here is a template if you need it:
 ```yaml
 # There is a default will be used unless specifically askd for
