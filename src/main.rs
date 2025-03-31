@@ -41,12 +41,15 @@ fn main() -> () {
     let config = load_config();
 
     start_http_server(config.port, config.log, PathBuf::from(config.path), config.main);
+    let url = format!("http://localhost:{}", config.port);
     if config.browser {
-       let url = format!("http://localhost:{}", config.port);
+        let url_copy = url.clone();
         thread::spawn(move || {
-            let _ = webbrowser::open(&url);
+            let _ = webbrowser::open(&url_copy);
         });
     }
+    println!("The server is running on {}", url);
+    
 
 }
 

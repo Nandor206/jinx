@@ -9,7 +9,7 @@ Some times I use questionable commit messeges, please don't take it seriusly. TY
 #### On Linux/Mac (Tested on Fedora 41)
 - Fire up the terminal and run these commands:
 ```sh
-sudo curl -L -O https://github.com/Nandor206/jinx/releases/download/v4.0.0/Jinx
+sudo curl -L -O https://github.com/Nandor206/jinx/releases/download/v4.0.1/Jinx
 sudo chmod +x Jinx && sudo mv Jinx /usr/bin/
 ```
 - This creates a folder in the Documents folder and downloads the additional stuff needed (via the app)
