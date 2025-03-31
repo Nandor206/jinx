@@ -1,53 +1,56 @@
-use serde_derive::Deserialize;
-use tiny_http::{ Server, Response, StatusCode };
-use std::path::{ PathBuf, Path };
-use std::{ fs, thread };
-use std::process::Command;
-use std::process;
-use webbrowser;
+// crates:
 use std::fs::OpenOptions;
+use std::fs;
+use std::process;
+use serde::Deserialize;
+use serde_yaml;
+use clap::{Arg, self};
+use tiny_http::{Server, Response};
+use std::path::PathBuf;
 use chrono::Local;
 use std::io::Write;
+use std::thread;
+use webbrowser;
 
-// Config file reading
-#[derive(Deserialize)]
-struct Config {
-    #[serde(default)]
-    main: String,
-    path: PathBuf,
-    port: u32,
-    log: bool,
-    browser: bool,
-}
 
-fn main() {
-    // Getting data from config file
-    let (PORT, LOG, PATH, MAIN_PAGE, BROWSER) = match check() {
-        Ok(config) => config,
-        Err(err) => {
-            eprintln!("{}", err);
-            process::exit(1);
+
+fn main() -> () {
+    // Getting args
+    let matches = clap::Command
+        ::new("Jinx")
+        .version("4.0.0")
+        .author("Nandor206")
+        .about("Simple Nginx copy made in Rust. Supports a bunch of stuff.")
+        .arg(
+            Arg::new("edit")
+                .short('e')
+                .long("edit")
+                .help("Edit config file")
+                .action(clap::ArgAction::SetTrue)
+        ).get_matches();
+
+    if matches.get_flag("edit") {
+        let config_file = dirs::config_local_dir().unwrap().join("jinx/jinx.conf");
+        if !config_file.exists() {
+            create_conf(&config_file);
         }
-    };
+        process::Command::new("nano").arg(&config_file).status().expect("Failed to open nano.");
+        process::exit(0);
+    }
 
-    // Opening webbrowser if true
-    if BROWSER {
-        let url = format!("http://localhost:{}", PORT);
+    let config = load_config();
+
+    start_http_server(config.port, config.log, PathBuf::from(config.path), config.main);
+    if config.browser {
+       let url = format!("http://localhost:{}", config.port);
         thread::spawn(move || {
             let _ = webbrowser::open(&url);
         });
     }
 
-    // Printing important stuff
-    println!("Serving on port {}", PORT);
-    println!("Serving directory: {:?}", PATH);
-    println!("Serving main file: {:?}", MAIN_PAGE);
-
-    // Starting server
-    start_http_server(PORT, LOG, PATH, MAIN_PAGE);
 }
 
-fn start_http_server(port: u32, log: bool, path: PathBuf, main_page: String) {
+fn  start_http_server(port: u32, log: bool, path: PathBuf, main_page: String) {
     let server = Server::http(format!("0.0.0.0:{}", port)).unwrap();
 
     // Incoming requests
@@ -106,58 +109,6 @@ fn start_http_server(port: u32, log: bool, path: PathBuf, main_page: String) {
     }
 }
 
-// Checking if path, config exits. Reading config file.
-fn check() -> Result<(u32, bool, PathBuf, String, bool), String> {
-    let file = "config.yaml";
-
-    let file_content: String;
-    let config: Config;
-
-    if Path::new(file).exists() {
-        file_content = fs
-            ::read_to_string(file)
-            .map_err(|_| "Unable to read config.yaml".to_string())?;
-    } else {
-        let url = "https://github.com/Nandor206/jinx/releases/latest/download/config.yaml";
-        let output = Command::new("curl")
-            .arg("-O")
-            .arg(url)
-            .output()
-            .expect("Failed to execute curl");
-
-        if !output.status.success() || !Path::new(file).exists() {
-            return Err("Failed to download config.yaml".to_string());
-        }
-
-        file_content = fs
-            ::read_to_string(file)
-            .map_err(|_| "Unable to read downloaded config.yaml".to_string())?;
-    }
-
-    config = serde_yaml::from_str(&file_content).map_err(|_| "Unable to parse YAML, there might be a problem with your YAML file".to_string())?;
-
-    let PORT = config.port;
-    let LOG = config.log;
-    let BROWSER = config.browser;
-
-    let PATH: PathBuf = if !config.path.as_os_str().is_empty() {
-        config.path.clone()
-    } else {
-        PathBuf::from("./")
-    };
-
-    if !PATH.exists() {
-        return Err(format!("Directory {:?} does not exist", PATH));
-    } else {
-        PathBuf::from("./");
-    }
-
-    let MAIN_PAGE = if !config.main.is_empty() { config.main } else { "index.html".to_string() };
-
-    Ok((PORT, LOG, PATH, MAIN_PAGE, BROWSER))
-}
-
-// log to file
 fn log_to_file(content: &str) {
     let mut file = OpenOptions::new()
         .create(true)
@@ -168,4 +119,73 @@ fn log_to_file(content: &str) {
     if let Err(e) = writeln!(file, "{}", content) {
         eprintln!("Failed to write to log file: {}", e);
     }
+}
+
+
+#[derive(Deserialize)]
+struct Config {
+    path: String,
+    main: String,
+    port: u32,
+    log: bool,
+    browser: bool,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Config { path: ".".to_string(), main: "index.html".to_string(), port: 7878, log: false, browser: false }
+    }
+}
+
+
+fn load_config() -> Config {
+    let config_dir = dirs::config_local_dir().unwrap_or_else(|| {
+        panic!("Could not find config directory. Please set the XDG_CONFIG_HOME environment variable.")
+    });
+    let config_path = config_dir.join("Jinx");
+    if !config_path.exists() {
+        std::fs::create_dir_all(&config_path).expect("Failed to create config directory");
+    }
+    let config_file = config_path.join("jinx.conf");
+    if let Ok(contents) = fs::read_to_string(&config_file) {
+        let config: Config = serde_yaml::from_str(&contents).expect("Failed to parse config file");
+        return config;
+    } else {
+        let default_config = Config::default();
+        return default_config;
+    }
+}
+
+fn create_conf(config_file: &PathBuf) -> () {
+    let content = r#"# There is a default will be used unless specifically asked for
+
+# Path where the files can be found
+path: "."
+
+# The name of the file that will be served
+# If not found serves: support page
+# If you want a custom 404 page put a file named '404.html' in the same directory
+main: "index.html"
+# .html supported, .php is not yet tested
+
+# Port number:
+port: 7878
+# Unsigned intager (u32), needed!
+# This is where you can find your website
+
+# Logging in to file:
+log: false
+# Boolean, needed!
+# If set true: will create a file named 'jinx.log'
+# If yet false: everything goes to the terminal
+
+# Whether you'd like to open the webbrowser
+browser: false
+# Boolean, needed!
+# If set true: will open default browser
+# If set false: won't open nothing"#;
+
+fs::create_dir_all(&config_file.parent().unwrap()).expect("Failed to create config directory");
+    fs::write(&config_file, content).expect("Failed to create config file");
+    println!("Config file created at: {}", config_file.display());
 }
