@@ -1,6 +1,6 @@
 ## Simple web server in Rust
 I started this project as a web application, then got bored and continued it as a Nginx copy. 
-Don't expect too much from it, but it does the very basic stuff. You can share 1 page, you can log the things it does, etc. Really basic stuff. I hope it will get better by the time. Seems like a really good project.
+Don't expect too much from it, but it does the very basic stuff. You can host multiple pages, you can log the things it does, etc. Really basic stuff. I hope it will get better by the time. Seems like a really good project.
 I hate the fact, that I don't know much about Rust yet, so I'm using ChatGPT here and there. I cannot take responsibility for anything.
 
 Some times I use questionable commit messeges, please don't take it seriusly. TY
@@ -9,7 +9,7 @@ Some times I use questionable commit messeges, please don't take it seriusly. TY
 #### On Linux/Mac (Tested on Fedora 41)
 - Fire up the terminal and run these commands:
 ```sh
-sudo curl -Lo github.com/Nandor206/jinx/releases/latest/download/jinx &&
+sudo curl -O https://github.com/Nandor206/jinx/releases/latest/download/jinx &&
 sudo chmod +x jinx && sudo mv jinx /usr/bin/
 ```
 - This creates a folder in the Documents folder and downloads the additional stuff needed (via the app)
