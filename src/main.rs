@@ -9,7 +9,6 @@ use tiny_http::{Server, Response};
 use std::path::PathBuf;
 use chrono::Local;
 use std::io::Write;
-use std::thread;
 use webbrowser;
 
 
@@ -43,17 +42,16 @@ fn main() -> () {
     let url = format!("http://localhost:{}", config.port);
     println!("The server is running on {}", &url);
     if config.browser {
-        let url_copy = url.clone();
-        thread::spawn(move || {
-            let _ = webbrowser::open(&url_copy);
-        });
+        if let Err(e) = webbrowser::open(&url) {
+            eprintln!("Failed to open browser: {}", e);
+        }
     }
-    start_http_server(config.port, config.log, PathBuf::from(config.path), config.main);
+    start_http_server(config.port, config.log, PathBuf::from(config.path), config.main, config.log_dir);
     
 
 }
 
-fn  start_http_server(port: u32, log: bool, path: PathBuf, main_page: String) {
+fn  start_http_server(port: u32, log: bool, path: PathBuf, main_page: String, log_dir: String) {
     let server = Server::http(format!("0.0.0.0:{}", port)).unwrap();
 
     // Incoming requests
@@ -88,14 +86,11 @@ fn  start_http_server(port: u32, log: bool, path: PathBuf, main_page: String) {
             request.method(),
         );
         if log {
-            log_to_file(&content_log);
-        } else {
-            println!(
-                "Request for: {:?}\nRequest method: {:?}",
-                url,
-                request.method(),
-            );
+            log_to_file(&content_log, &log_dir);
         }
+            println!(
+                "{}",content_log
+            );
 
         // Respond with the file content or 404 page
         let response = Response::from_data(content);
@@ -105,18 +100,24 @@ fn  start_http_server(port: u32, log: bool, path: PathBuf, main_page: String) {
         let timestamp = Local::now().format("[%Y-%m-%d %H:%M:%S]").to_string();
         let content_log = format!("{} - Response successfully sent", timestamp);
         if log {
-            log_to_file(&content_log);
-        } else {
-            println!("Response successfully sent");
+            log_to_file(&content_log, &log_dir);
         }
+            println!("{}", content_log);
     }
 }
 
-fn log_to_file(content: &str) {
+fn log_to_file(content: &str, log_dir: &String) {
+    let path: PathBuf;
+    if log_dir.is_empty() {
+        path = dirs::config_local_dir().unwrap().join("jinx/jinx.log");
+    }
+    else {
+        path = PathBuf::from(log_dir);
+    }
     let mut file = OpenOptions::new()
         .create(true)
         .append(true)
-        .open("jinx.log")
+        .open(path)
         .expect("Failed to open log file");
 
     if let Err(e) = writeln!(file, "{}", content) {
@@ -132,11 +133,12 @@ struct Config {
     port: u32,
     log: bool,
     browser: bool,
+    log_dir: String
 }
 
 impl Default for Config {
     fn default() -> Self {
-        Config { path: ".".to_string(), main: "index.html".to_string(), port: 7878, log: false, browser: false }
+        Config { path: ".".to_string(), main: "index.html".to_string(), port: 7878, log: false, browser: false, log_dir: "".to_string() }
     }
 }
 
@@ -181,6 +183,9 @@ log: false
 # Boolean, needed!
 # If set true: will create a file named 'jinx.log'
 # If yet false: everything goes to the terminal
+
+log_dir: ""
+# If left empty the log is going to be next to the config file
 
 # Whether you'd like to open the webbrowser
 browser: false

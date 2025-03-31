@@ -9,18 +9,18 @@ Some times I use questionable commit messeges, please don't take it seriusly. TY
 #### On Linux/Mac (Tested on Fedora 41)
 - Fire up the terminal and run these commands:
 ```sh
-sudo curl -L -O https://github.com/Nandor206/jinx/releases/download/v4.0.1/Jinx
+sudo curl -L -O https://github.com/Nandor206/jinx/releases/download/latest/Jinx
 sudo chmod +x Jinx && sudo mv Jinx /usr/bin/
 ```
 - This creates a folder in the Documents folder and downloads the additional stuff needed (via the app)
 
 #### On Windows (Not tested)
-- Download it with this link:
-https://github.com/Nandor206/jinx/releases/latest/Jinx.exe
-- The app will download the additional stuff needed
+- Download it trough this link:
+https://github.com/Nandor206/jinx/releases/latest/
+- The app will make the additional stuff needed
 
 #### To run the app:
-- Windows: start Jinx.exe (It's built, but not supported!)
+- Windows: start Jinx.exe (It's built, but not supported! Probably not going to work)
 - Linux/Mac: run 
 ```sh
 jinx
@@ -58,6 +58,9 @@ log: false
 # Boolean, needed!
 # If set true: will create a file named 'jinx.log'
 # If yet false: everything goes to the terminal
+
+log_dir: ""
+# If left empty the log is going to be next to the config file
 
 # Whether you'd like to open the webbrowser
 browser: false

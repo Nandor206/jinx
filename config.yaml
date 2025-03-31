@@ -20,6 +20,9 @@ log: false
 # If set true: will create a file named 'jinx.log'
 # If yet false: everything goes to the terminal
 
+log_dir: ""
+# If left empty the log is going to be next to the config file
+
 # Whether you'd like to open the webbrowser
 browser: false
 # Boolean, needed!
