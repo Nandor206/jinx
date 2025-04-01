@@ -1,13 +1,14 @@
 // crates:
 use std::fs;
 use std::process;
+use ftail::error::FtailError;
 use serde::Deserialize;
 use serde_yaml;
 use clap::{Arg, self};
 use tiny_http::{Server, Response};
 use std::path::PathBuf;
-use chrono::Local;
 use webbrowser;
+use ftail::Ftail;
 
 
 
@@ -24,7 +25,15 @@ fn main() -> () {
                 .long("edit")
                 .help("Edit config file")
                 .action(clap::ArgAction::SetTrue)
-        ).get_matches();
+        )
+        .arg(
+            Arg::new("log")
+                .short('l')
+                .long("log")
+                .help("Starts logging to file")
+                .action(clap::ArgAction::SetTrue)
+        )
+        .get_matches();
 
     if matches.get_flag("edit") {
         let config_file = dirs::config_local_dir().unwrap().join("jinx/jinx.conf");
@@ -34,25 +43,31 @@ fn main() -> () {
         process::Command::new("nano").arg(&config_file).status().expect("Failed to open nano.");
         process::exit(0);
     }
-
     let config = load_config();
+    let mut log = config.log;
+    if matches.get_flag("log") {
+        log = true;
+    }
 
-    let url = format!("http://localhost:{}", config.port);
-    println!("The server is running on {}", &url);
+    // logging but only to stderr, cuz we don't need the log yet
+    init_log(false);
+
+    let url = format!("http://localhost:{}\n", config.port);
+    log::info!("The server is running on {}", &url);
+
     if config.browser {
         if let Err(e) = webbrowser::open(&url) {
-            eprintln!("Failed to open browser: {}", e);
+            log::error!("Failed to open browser: {}\n", e);
         }
     }
-    start_http_server(config.port, config.log, PathBuf::from(config.path), config.main, config.log_dir);
-    
-
+    start_http_server(config.port, PathBuf::from(config.path), config.main.to_string(), log);
 }
 
-fn  start_http_server(port: u32, log: bool, path: PathBuf, main_page: String, log_dir: String) {
+fn  start_http_server(port: u32, path: PathBuf, main_page: String, log: bool) {
     let server = Server::http(format!("0.0.0.0:{}", port)).unwrap();
 
-    // Incoming requests
+    init_log(log);
+
     for request in server.incoming_requests() {
         let url = request.url().trim_start_matches('/');
         
@@ -61,6 +76,7 @@ fn  start_http_server(port: u32, log: bool, path: PathBuf, main_page: String, lo
             let index_path = path.join(&main_page);
             fs::read(index_path).unwrap_or_else(|_| {
                 // If the main page can't be read, return the default error message
+                log::error!("Failed to read index file.");
                 b"<h1>Your page can't be loaded.</h1><p>You either don't have your .html file in the right directory or the file's name is wrong.</p><p>Please check the config.yaml file, the problem might be there.</p><br><p>If you need more help please check out my github page <a href='https://github.com/Nandor206/jinx'>here</a></p><p>Start an issue if needed.</p>".to_vec()
             })
         } else {
@@ -70,55 +86,60 @@ fn  start_http_server(port: u32, log: bool, path: PathBuf, main_page: String, lo
                 // If the file is not found, return the 404 error page
                 fs::read(path.join("404.html")).unwrap_or_else(|_| {
                     // If the 404.html is also missing, return a default 404 message
+                    log::error!("404 page missing.");
                     b"<h1>404 - Page Not Found</h1><p>Sorry, the page you are looking for does not exist.</p>".to_vec()
                 })
             })
         };
 
         // Log the request
-        let timestamp = Local::now().format("[%Y-%m-%d %H:%M:%S]").to_string();
-        let content_log = format!(
-            "{} - Request for: {:?}\nRequest method: {:?}",
-            timestamp,
-            url,
-            request.method(),
-        );
-        if log {
-            log_to_file(&content_log, &log_dir);
-        }
-            println!(
-                "{}",content_log
-            );
-
+        let log_url = if url.is_empty() {
+            &main_page
+        } else { &url.to_string() };
+        log::info!("Request sent for \"{}\", with method: {}", log_url, request.method());
+        
         // Respond with the file content or 404 page
         let response = Response::from_data(content);
         let _ = request.respond(response);
 
         // Log the successful response
-        let timestamp = Local::now().format("[%Y-%m-%d %H:%M:%S]").to_string();
-        let content_log = format!("{} - Response successfully sent", timestamp);
-        if log {
-            log_to_file(&content_log, &log_dir);
-        }
-            println!("{}", content_log);
+        log::info!("Response succesfully sent!\n")
+
+        
     }
 }
 
-fn log_to_file(content: &str, log_dir: &str) -> () {
-    let path = match log_dir {
-        "" => {dirs::config_local_dir().unwrap().join("jinx/jinx.log")},
-        _ => {PathBuf::from(log_dir).join("jinx.log")}
+fn init_log(log: bool) {
+    let config = load_config();
+    
+    let log_file = if !config.log_dir.is_empty() {
+        config.log_dir.clone()
+    } else {
+        dirs::config_local_dir()
+            .unwrap()
+            .join("jinx/debug.log")
+            .to_string_lossy().to_string()
     };
 
-    // Read the existing content if the file exists
-    let mut log_data = fs::read_to_string(&path).unwrap_or_else(|_| String::new());
+    if log {
+        // Create log directory if it doesn't exist
+        let log_dir = std::path::Path::new(&log_file).parent().unwrap();
+        if !log_dir.exists() {
+            fs::create_dir_all(log_dir).expect("Failed to create log directory");
+        }
 
-    // Append new content
-    log_data.push_str(content);
-    log_data.push('\n');
-
-    // Write the updated log back to the file
-    fs::write(&path, log_data).unwrap();
+        // Writes only to the log file
+        let _ = Ftail::new()
+            .single_file(&log_file, true, log::LevelFilter::Info)
+            .datetime_format("%Y-%m-%d %H:%M:%S")
+            .init();
+    } else {
+        // Writes only to stderr
+        let _ = Ftail::new()
+            .console(log::LevelFilter::Info)
+            .datetime_format("%H:%M:%S")
+            .init();
+    }
 }
 
 
@@ -134,7 +155,7 @@ struct Config {
 
 impl Default for Config {
     fn default() -> Self {
-        Config { path: ".".to_string(), main: "index.html".to_string(), port: 7878, log: false, browser: false, log_dir: "".to_string() }
+        Config { path: ".".to_string(), main: "index.html".to_string(), port: 7878, log: false, browser: false, log_dir: "".to_string()}
     }
 }
 
@@ -181,7 +202,8 @@ log: false
 # If yet false: everything goes to the terminal
 
 log_dir: ""
-# If left empty the log is going to be next to the config file
+# If left empty the log is going to be next to the config file called debug.log
+# If you set something name the file too!
 
 # Whether you'd like to open the webbrowser
 browser: false

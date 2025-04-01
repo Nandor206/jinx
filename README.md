@@ -9,7 +9,7 @@ Some times I use questionable commit messeges, please don't take it seriusly. TY
 #### On Linux/Mac (Tested on Fedora 41)
 - Fire up the terminal and run these commands:
 ```sh
-sudo curl -L -O https://github.com/Nandor206/jinx/releases/download/v4.1.0/Jinx
+sudo curl -L -O https://github.com/Nandor206/jinx/releases/download/v4.2.0/Jinx
 sudo chmod +x Jinx && sudo mv Jinx /usr/bin/
 ```
 - This creates a folder in the Documents folder and downloads the additional stuff needed (via the app)
@@ -32,9 +32,8 @@ jinx -e
 ```
 
 ### Configuration file:
-!!! browser and logging is broken !!!
-log: makes log file in current directory
-browser: doesn't open
+!!! logging is broken !!!
+If you set it to true it will still ouput to stdErr
 Here is a template if you need it:
 ```yaml
 # There is a default will be used unless specifically askd for

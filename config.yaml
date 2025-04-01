@@ -21,7 +21,8 @@ log: false
 # If yet false: everything goes to the terminal
 
 log_dir: ""
-# If left empty the log is going to be next to the config file
+# If left empty the log is going to be next to the config file called debug.log
+# If you set something name the file too!
 
 # Whether you'd like to open the webbrowser
 browser: false
