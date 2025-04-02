@@ -1,5 +1,5 @@
 ## Simple web server in Rust
-I started this project as a web application, then got bored and continued it as a Nginx copy. 
+I started this project as a web application, then got bored and continued it as a Nginx copy. It's made for web development mainly, but works for hosting too (I use it for my own website). 
 Don't expect too much from it, but it does the very basic stuff. You can host multiple pages, you can log the things it does, etc. Really basic stuff. I hope it will get better by the time. Seems like a really good project.
 I hate the fact, that I don't know much about Rust yet, so I'm using ChatGPT here and there. I cannot take responsibility for anything.
 
@@ -12,28 +12,26 @@ Some times I use questionable commit messeges, please don't take it seriusly. TY
 sudo curl -L -O https://github.com/Nandor206/jinx/releases/download/v5.0.0/Jinx
 sudo chmod +x Jinx && sudo mv Jinx /usr/bin/
 ```
-- This creates a folder in the Documents folder and downloads the additional stuff needed (via the app)
+- The app will do the additional stuff
 
 #### On Windows (Not tested)
-- Download it trough this link:
+- Download the .exe file trough this link:
 https://github.com/Nandor206/jinx/releases/latest/
-- The app will make the additional stuff needed
+- Run the .exe file and it will start the app
+- The app will do the additional stuff needed
+- Windows is not suppoerted!
 
-#### To run the app:
-- Windows: start Jinx.exe (It's built, but not supported! Probably not going to work)
-- Linux/Mac: run 
+#### How to use:
 ```sh
-jinx
-```
-
-#### To edit the config file:
-```sh
-jinx -e
+# Starting the app:
+Jinx
+# Editing the config file:
+Jinx -e, --edit
+# Enable logging:
+Jinx -l, --log
 ```
 
 ### Configuration file:
-!!! logging is broken !!!
-If you set it to true it will still ouput to stdErr
 Here is a template if you need it:
 ```yaml
 # There is a default will be used unless specifically askd for
