@@ -6,11 +6,10 @@ edition = "2024"
 [dependencies]
 clap = "4.5.34"
 dirs = "6.0.0"
-env_logger = "0.11.7"
-ftail = "0.2.1"
 log = "0.4.27"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_yaml = "0.9.34"
+simplelog = "0.12.2"
 tiny_http = "0.12.0"
 webbrowser = "1.0.4"
 
