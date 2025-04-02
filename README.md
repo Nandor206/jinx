@@ -9,7 +9,7 @@ Some times I use questionable commit messeges, please don't take it seriusly. TY
 #### On Linux/Mac (Tested on Fedora 41)
 - Fire up the terminal and run these commands:
 ```sh
-sudo curl -L -O https://github.com/Nandor206/jinx/releases/download/v4.2.0/Jinx
+sudo curl -L -O https://github.com/Nandor206/jinx/releases/download/v5.0.0/Jinx
 sudo chmod +x Jinx && sudo mv Jinx /usr/bin/
 ```
 - This creates a folder in the Documents folder and downloads the additional stuff needed (via the app)
@@ -70,8 +70,8 @@ browser: false
 
 ## TODO:
 - [x] Multi page support - Done, tho not the way I wanted it
-- [ ] Other error support - Probably never gonna be implemented
+- [x] Other error support - Probably never gonna be implemented
 - [x] Logging to file
 - [x] Config file - Was the first stuff to do
-- [ ] Testing more computers
 - [x] Cleaning the code - Done, thos might get dirty again
+- [ ] Testing more computers
